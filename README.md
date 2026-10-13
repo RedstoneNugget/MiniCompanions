@@ -41,7 +41,7 @@ Oder selbst bauen (siehe [Entwicklung](#entwicklung)).
 
 1. [Fabric Loader](https://fabricmc.net/use/) (≥ 0.19) für Minecraft 1.21.11 installieren.
 2. [Fabric API](https://modrinth.com/mod/fabric-api) in den `mods`-Ordner legen.
-3. `minicompanions-1.0.1.jar` (aus den Releases) in den `mods`-Ordner legen.
+3. `minicompanions-1.0.2.jar` (aus den Releases) in den `mods`-Ordner legen.
 4. Optional: [Mod Menu](https://modrinth.com/mod/modmenu) (Einstellungen über das Mod-Menü).
 
 Alle Daten liegen in `config/minicompanions/`:
@@ -266,7 +266,7 @@ Voraussetzung: **JDK 21** (z. B. [Eclipse Temurin 21](https://adoptium.net/)).
 ```
 git clone https://github.com/RedstoneNugget/MiniCompanions.git
 cd MiniCompanions
-gradlew build              # baut build/libs/minicompanions-1.0.1.jar und führt die Unit-Tests aus
+gradlew build              # baut build/libs/minicompanions-1.0.2.jar und führt die Unit-Tests aus
 gradlew test               # Tests: Streamer-Pipeline, Chat-Formate aller Plattformen, Filter, Physik, Wegsuche
 gradlew runClientGameTest  # startet den echten Client und prüft alles automatisch (Screenshots in build/run/clientGameTest/screenshots)
 gradlew runClient -PwithModMenu=true
