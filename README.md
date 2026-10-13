@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/logo.png" width="160" alt="Mini-Begleiter Logo">
+</p>
+
 # Mini-Begleiter (Mini Companions)
 
 ![Minecraft 1.21.11](https://img.shields.io/badge/Minecraft-1.21.11-62B47A) ![Fabric](https://img.shields.io/badge/Loader-Fabric-DBD0B4) ![Java 21](https://img.shields.io/badge/Java-21-ED8B00) ![Client only](https://img.shields.io/badge/Umgebung-nur%20Client-5865F2) ![Lizenz MIT](https://img.shields.io/badge/Lizenz-MIT-blue)
