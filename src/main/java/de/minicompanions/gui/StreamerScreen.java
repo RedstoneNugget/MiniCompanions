@@ -122,6 +122,13 @@ public final class StreamerScreen extends OptionsScreen {
                 .add(new Toggle(Mini.t("streamer.default_skin", "Unbekannt = Standard-Skin"), () -> c.unknownNameDefaultSkin, v -> c.unknownNameDefaultSkin = v))
                 .add(new Toggle(Mini.t("streamer.greeting", "Begrüßung beim Spawn"), () -> c.spawnGreeting, v -> c.spawnGreeting = v))
                 .add(new Toggle(Mini.t("streamer.new_bubble", "\"Neu: Name\"-Blase"), () -> c.newViewerBubble, v -> c.newViewerBubble = v))
+                .add(new Toggle(Mini.t("streamer.remember", "Zuschauer merken (Figur kommt zurück)"), () -> c.rememberViewers, v -> c.rememberViewers = v))
+                .add(new Action(Mini.t("streamer.forget", "Gemerkte Zuschauer vergessen (%s)", sm.rememberedViewers()), () -> {
+                    sm.forgetViewers();
+                    StreamerScreen again = new StreamerScreen(parent);
+                    again.tab = tab;
+                    open(again);
+                }, false))
                 .add(new Slider(Mini.t("streamer.rate", "Spawns pro Sekunde"), 1, 20, 1, () -> c.maxSpawnsPerSecond, v -> c.maxSpawnsPerSecond = v, null))
                 .add(new Slider(Mini.t("streamer.queue", "Warteschlange max."), 1, 200, 1, () -> c.spawnQueueMax, v -> c.spawnQueueMax = v, null));
 

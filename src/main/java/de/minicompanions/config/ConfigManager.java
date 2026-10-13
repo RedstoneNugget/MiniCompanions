@@ -3,6 +3,7 @@ package de.minicompanions.config;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+import de.minicompanions.streamer.KnownViewers;
 import de.minicompanions.streamer.ModerationLists;
 import de.minicompanions.streamer.StreamerConfig;
 import org.slf4j.Logger;
@@ -34,13 +35,14 @@ public final class ConfigManager {
     public static final Logger LOG = LoggerFactory.getLogger("MiniCompanions");
     public static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
 
-    public enum Part { CONFIG, FIGURES, STREAMER, MODERATION }
+    public enum Part { CONFIG, FIGURES, STREAMER, MODERATION, VIEWERS }
 
     private final Path dir;
     public MiniConfig config = new MiniConfig();
     public List<FigureData> figures = new ArrayList<>();
     public StreamerConfig streamer = new StreamerConfig();
     public ModerationLists moderation = new ModerationLists();
+    public KnownViewers viewers = new KnownViewers();
     public final List<String> warnings = new ArrayList<>();
 
     private final EnumSet<Part> dirty = EnumSet.noneOf(Part.class);
@@ -72,6 +74,7 @@ public final class ConfigManager {
             case FIGURES -> dir.resolve("figures.json");
             case STREAMER -> dir.resolve("streamer.json");
             case MODERATION -> dir.resolve("moderation.json");
+            case VIEWERS -> dir.resolve("viewers.json");
         };
     }
 
@@ -112,6 +115,10 @@ public final class ConfigManager {
             case MODERATION -> {
                 moderation = read(file(part), ModerationLists.class, ModerationLists::new);
                 moderation.validate();
+            }
+            case VIEWERS -> {
+                viewers = read(file(part), KnownViewers.class, KnownViewers::new);
+                viewers.validate(System.currentTimeMillis());
             }
         }
     }
@@ -202,6 +209,7 @@ public final class ConfigManager {
             case FIGURES -> write(file(part), figures);
             case STREAMER -> write(file(part), streamer);
             case MODERATION -> write(file(part), moderation);
+            case VIEWERS -> write(file(part), viewers);
         }
     }
 

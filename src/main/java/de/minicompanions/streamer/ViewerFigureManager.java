@@ -13,6 +13,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.Text;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -29,6 +30,11 @@ public final class ViewerFigureManager implements ViewerWorld {
     private static final Random RNG = new Random();
     private final Map<String, Figure> active = new LinkedHashMap<>();
     private final Set<String> pending = new HashSet<>();
+    /** Nachrichten von Zuschauern, deren Figur gerade noch lädt: werden gezeigt, sobald sie da ist. */
+    private final Map<String, Waiting> waiting = new HashMap<>();
+
+    private record Waiting(String text, ChatRoles roles, Integer colorRgb) {
+    }
     private final StreamerModeManager owner;
     private String lastNotice = "";
     private long lastNoticeTime;
@@ -71,6 +77,7 @@ public final class ViewerFigureManager implements ViewerWorld {
     }
 
     private void finish(SpawnQueue.Request r, SkinManager.Skin skin) {
+        Waiting msg = waiting.remove(r.login());
         if (!pending.remove(r.login()) || !owner.isEnabled()) {
             return; // inzwischen gelöscht/gesperrt/Panik oder Streamer-Modus aus
         }
@@ -82,6 +89,10 @@ public final class ViewerFigureManager implements ViewerWorld {
         if (failed && !cfg().unknownNameDefaultSkin) {
             notice("unknown_name", r.mcName());
             return;
+        }
+        if (!failed && cfg().rememberViewers) {
+            // Skin merken: schreibt der Zuschauer später ohne Figur (z. B. nach einem Neustart), kommt sie zurück
+            Mini.configs.viewers.remember(r.login(), r.mcName(), System.currentTimeMillis());
         }
         Figure old = active.remove(r.login());
         if (old != null) {
@@ -104,7 +115,10 @@ public final class ViewerFigureManager implements ViewerWorld {
         Mini.figures.addViewer(f);
         active.put(r.login(), f);
         f.showEmote(Emote.SPARKLE, 1.5f);
-        if (cfg().newViewerBubble || cfg().spawnGreeting) {
+        if (msg != null) {
+            // zurückgeholte Figur: gleich die Nachricht zeigen statt "Neu: ..."
+            showMessage(r.login(), msg.text(), msg.roles(), msg.colorRgb());
+        } else if (cfg().newViewerBubble || cfg().spawnGreeting) {
             String text = cfg().newViewerBubble ? Mini.t("viewer.new", "Neu: %s", f.viewerDisplay).getString()
                     : Mini.t("viewer.hello", "Hallo!").getString();
             long now = System.currentTimeMillis();
@@ -149,6 +163,7 @@ public final class ViewerFigureManager implements ViewerWorld {
     @Override
     public void remove(String login) {
         pending.remove(login);
+        waiting.remove(login);
         Figure f = active.remove(login);
         if (f != null) {
             Mini.figures.remove(f);
@@ -168,6 +183,7 @@ public final class ViewerFigureManager implements ViewerWorld {
     @Override
     public void removeAll() {
         pending.clear();
+        waiting.clear();
         active.clear();
         Mini.figures.removeAllViewers();
     }
@@ -175,6 +191,11 @@ public final class ViewerFigureManager implements ViewerWorld {
     @Override
     public void showMessage(String login, String text, ChatRoles roles, Integer colorRgb) {
         Figure f = active.get(login);
+        if (f == null && pending.contains(login)) {
+            // Figur lädt noch (z. B. gerade zurückgeholt): Nachricht zeigen, sobald sie da ist
+            waiting.put(login, new Waiting(text, roles, colorRgb));
+            return;
+        }
         if (f == null || !owner.messagesVisible()) {
             return;
         }
@@ -189,6 +210,7 @@ public final class ViewerFigureManager implements ViewerWorld {
 
     @Override
     public void hideMessages(String login) {
+        waiting.remove(login);
         Figure f = active.get(login);
         if (f != null) {
             f.bubbles.clearViewer();
@@ -198,6 +220,7 @@ public final class ViewerFigureManager implements ViewerWorld {
 
     @Override
     public void hideAllMessages() {
+        waiting.clear();
         for (Figure f : active.values()) {
             f.bubbles.clearViewer();
             f.lastViewerMessage = "";

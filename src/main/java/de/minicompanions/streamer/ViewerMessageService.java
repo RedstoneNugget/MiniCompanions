@@ -11,19 +11,24 @@ import java.util.Map;
  * Anzeige und werden nicht gespeichert.
  */
 public final class ViewerMessageService {
+    /** Dieselbe Nachricht gilt nur so lange als Spam; danach darf sie wieder erscheinen. */
+    public static final long DUPLICATE_WINDOW_MS = 30_000;
     private final StreamerConfig cfg;
     private final ModerationService mod;
     private final ViewerWorld world;
     private final SpawnQueue queue;
     private final RateLimiter perViewer = new RateLimiter();
     private final RateLimiter.Window global = new RateLimiter.Window(64);
-    /** Letzte normalisierte Nachricht pro Zuschauer (Spam-Erkennung), begrenzt. */
-    private final Map<String, String> lastText = new LinkedHashMap<>(64, 0.75f, true) {
+    /** Letzte normalisierte Nachricht pro Zuschauer mit Zeitpunkt (Spam-Erkennung), begrenzt. */
+    private final Map<String, Last> lastText = new LinkedHashMap<>(64, 0.75f, true) {
         @Override
-        protected boolean removeEldestEntry(Map.Entry<String, String> eldest) {
+        protected boolean removeEldestEntry(Map.Entry<String, Last> eldest) {
             return size() > 500;
         }
     };
+
+    private record Last(String norm, long at) {
+    }
 
     public ViewerMessageService(StreamerConfig cfg, ModerationService mod, ViewerWorld world, SpawnQueue queue) {
         this.cfg = cfg;
@@ -52,7 +57,8 @@ public final class ViewerMessageService {
             return StreamerPipeline.Outcome.IGNORED_EMPTY;
         }
         String norm = MessageSanitizer.normalizeForSpam(text);
-        if (!norm.isEmpty() && norm.equals(lastText.get(login))) {
+        Last last = lastText.get(login);
+        if (!norm.isEmpty() && last != null && norm.equals(last.norm()) && now - last.at() < DUPLICATE_WINDOW_MS) {
             return StreamerPipeline.Outcome.IGNORED_DUPLICATE;
         }
         WordFilter.Result fr = mod.filter().apply(text);
@@ -68,7 +74,7 @@ public final class ViewerMessageService {
         if (!global.tryAcquire(now, cfg.maxMessagesPerSecond, 1000)) {
             return StreamerPipeline.Outcome.IGNORED_RATE;
         }
-        lastText.put(login, norm);
+        lastText.put(login, new Last(norm, now));
         if (cfg.approvalForMessages) {
             boolean ok = queue.awaitMessageApproval(new SpawnQueue.PendingMessage(login, m.displayName(), text, m.roles(), m.colorRgb(), now), 50);
             return ok ? StreamerPipeline.Outcome.MESSAGE_AWAITING_APPROVAL : StreamerPipeline.Outcome.IGNORED_QUEUE_FULL;

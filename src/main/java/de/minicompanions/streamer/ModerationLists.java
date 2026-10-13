@@ -5,7 +5,7 @@ import java.util.List;
 
 /**
  * Dauerhaft gespeicherte Sperrlisten (config/minicompanions/moderation.json).
- * Das ist die einzige Zuschauer-Information, die dauerhaft gespeichert wird.
+ * Außerdem wird nur noch gespeichert, welcher Zuschauer welchen Skin gewählt hat ({@link KnownViewers}).
  */
 public final class ModerationLists {
     public List<String> bannedViewers = new ArrayList<>();

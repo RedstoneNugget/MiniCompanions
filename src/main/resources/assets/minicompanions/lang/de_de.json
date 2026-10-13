@@ -377,6 +377,8 @@
   "minicompanions.streamer.name_colors.multi": "bei mehreren Plattformen",
   "minicompanions.streamer.name_colors.off": "aus",
   "minicompanions.streamer.new_bubble": "\"Neu: Name\"-Blase",
+  "minicompanions.streamer.remember": "Zuschauer merken (Figur kommt zurück)",
+  "minicompanions.streamer.forget": "Gemerkte Zuschauer vergessen (%s)",
   "minicompanions.streamer.no_active": "Keine Zuschauer-Figuren aktiv.",
   "minicompanions.streamer.notice.limit": "Limit erreicht (%s) - neue Befehle werden ignoriert.",
   "minicompanions.streamer.notice.unknown": "Unbekannter Minecraft-Name: %s",

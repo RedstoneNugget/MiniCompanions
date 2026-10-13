@@ -71,4 +71,33 @@ class LiveChatProbeTest {
     void twitch() throws InterruptedException {
         probe(ChatPlatform.TWITCH, System.getProperty("twitch"));
     }
+
+    /**
+     * Ruhiger Kanal ({@code -Dtwitchquiet=kanal -Dseconds=150}): Nach 60 s Stille fragt die Mod selbst per PING
+     * nach; antwortet Twitch, bleibt die Verbindung bestehen und wird nicht neu aufgebaut.
+     */
+    @Test
+    void twitchStaysConnectedWhenQuiet() throws InterruptedException {
+        String channel = System.getProperty("twitchquiet");
+        if (channel == null || channel.isBlank()) {
+            return;
+        }
+        int seconds = Integer.parseInt(System.getProperty("seconds", "150"));
+        ChatSource s = ChatPlatform.TWITCH.create();
+        s.start(channel, e -> { });
+        boolean everDropped = false;
+        boolean connected = false;
+        for (int i = 0; i < seconds * 2; i++) {
+            Thread.sleep(500);
+            connected |= s.status() == ChatSource.Status.CONNECTED;
+            everDropped |= connected && s.status() != ChatSource.Status.CONNECTED;
+        }
+        ChatSource.Status last = s.status();
+        String err = s.lastError();
+        s.stop();
+        System.out.println("[LIVE] Twitch ruhig '" + channel + "' " + seconds + " s: status=" + last + " getrennt=" + everDropped + " error=" + err);
+        assertTrue(connected, "nicht verbunden: " + err);
+        assertFalse(everDropped, "Verbindung wurde getrennt: " + err);
+        assertNull(err);
+    }
 }

@@ -137,7 +137,7 @@ public final class MiniCompanionsClient implements ClientModInitializer {
         switch (part) {
             case FIGURES -> Mini.figures.syncFromConfig();
             case MODERATION -> Mini.streamer.moderation().replaceLists(Mini.configs.moderation);
-            case STREAMER -> Mini.streamer.configReloaded();
+            case STREAMER, VIEWERS -> Mini.streamer.configReloaded();
             case CONFIG -> reloadLines();
             default -> {
             }

@@ -98,7 +98,7 @@ public final class TwitchChatSource implements ChatSource {
         SSLSocket s = (SSLSocket) SSLSocketFactory.getDefault().createSocket();
         socket = s;
         s.connect(new InetSocketAddress(HOST, PORT), 10_000);
-        s.setSoTimeout(30_000);
+        s.setSoTimeout(10_000);
         s.startHandshake();
         BufferedWriter out = new BufferedWriter(new OutputStreamWriter(s.getOutputStream(), StandardCharsets.UTF_8));
         BufferedReader in = new BufferedReader(new InputStreamReader(s.getInputStream(), StandardCharsets.UTF_8));
@@ -113,12 +113,14 @@ public final class TwitchChatSource implements ChatSource {
             try {
                 line = in.readLine();
             } catch (SocketTimeoutException timeout) {
-                // Keepalive: Twitch sendet alle ~5 Minuten PING; wir prüfen zusätzlich selbst.
+                // Keepalive: Twitch sendet nur alle ~5 Minuten PING. Damit eine still abgerissene Verbindung
+                // (WLAN-Wechsel, Router) nicht minutenlang Nachrichten verschluckt, fragen wir nach 60 s Ruhe
+                // selbst nach und verbinden neu, wenn 30 s lang keine Antwort kommt.
                 long idle = System.currentTimeMillis() - lastRx;
-                if (idle > 6 * 60_000) {
+                if (idle > 90_000) {
                     throw new IOException("timeout");
                 }
-                if (idle > 4 * 60_000 && !pingSent) {
+                if (idle > 60_000 && !pingSent) {
                     send(out, "PING :tmi.twitch.tv");
                     pingSent = true;
                 }

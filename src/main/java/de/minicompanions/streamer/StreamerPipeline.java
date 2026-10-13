@@ -27,6 +27,7 @@ public final class StreamerPipeline {
     private final ViewerWorld world;
     private final LongSupplier clock;
     private final BooleanSupplier enabled;
+    private final KnownViewers known;
     private final SpawnQueue queue = new SpawnQueue();
     private final ViewerMessageService messages;
     private final RateLimiter commandCooldown = new RateLimiter();
@@ -34,9 +35,15 @@ public final class StreamerPipeline {
     private final java.util.EnumMap<Outcome, Integer> stats = new java.util.EnumMap<>(Outcome.class);
 
     public StreamerPipeline(StreamerConfig cfg, ModerationService mod, ViewerWorld world, LongSupplier clock, BooleanSupplier enabled) {
+        this(cfg, mod, world, new KnownViewers(), clock, enabled);
+    }
+
+    public StreamerPipeline(StreamerConfig cfg, ModerationService mod, ViewerWorld world, KnownViewers known, LongSupplier clock,
+                            BooleanSupplier enabled) {
         this.cfg = cfg;
         this.mod = mod;
         this.world = world;
+        this.known = known;
         this.clock = clock;
         this.enabled = enabled;
         this.messages = new ViewerMessageService(cfg, mod, world, queue);
@@ -66,6 +73,7 @@ public final class StreamerPipeline {
             if (uc.login() != null) {
                 world.remove(uc.login());
                 queue.removeViewer(uc.login());
+                known.forget(uc.login());
             }
             return Outcome.MODERATION_APPLIED;
         }
@@ -103,12 +111,32 @@ public final class StreamerPipeline {
                 return Outcome.IGNORED_COMMAND;
             }
             default -> {
+                if (!world.hasFigure(m.login())) {
+                    bringBack(m, now);
+                } else {
+                    known.touch(m.login(), now);
+                }
                 return messages.process(m, now);
             }
         }
     }
 
-    private Outcome handleSpawn(ChatEvent.Message m, String mcName, long now) {
+    /**
+     * Zuschauer schreibt, hat aber (noch) keine Figur - z. B. nach einem Neustart des Spiels oder nachdem
+     * der Streamer-Modus aus war: Hat er früher schon eine Figur gehabt, kommt sie mit demselben Skin zurück
+     * und zeigt die Nachricht, sobald sie da ist. Eine Freigabe ist nicht nötig, sie war es beim ersten Mal.
+     */
+    private void bringBack(ChatEvent.Message m, long now) {
+        String mcName = cfg.rememberViewers ? known.skinOf(m.login()) : null;
+        if (mcName == null || spawnBlocked(m, mcName, false) != null
+                || !spawnWindow.tryAcquire(now, cfg.maxSpawnsPerSecond, 1000)) {
+            return;
+        }
+        spawnNow(new SpawnQueue.Request(m.login(), m.displayName(), mcName, m.roles(), m.colorRgb(), now));
+    }
+
+    /** Prüft Pause, Sperren, Whitelist, Rollen und Limit. @return Grund der Ablehnung oder null */
+    private Outcome spawnBlocked(ChatEvent.Message m, String mcName, boolean notify) {
         String login = m.login();
         if (mod.spawnsPaused()) {
             return Outcome.IGNORED_PAUSED;
@@ -126,13 +154,26 @@ public final class StreamerPipeline {
             return Outcome.IGNORED_BANNED_SKIN;
         }
         if (cfg.viewerLimit <= 0) {
-            world.notice("limit_reached", 0);
+            if (notify) {
+                world.notice("limit_reached", 0);
+            }
             return Outcome.IGNORED_LIMIT;
         }
         boolean replacing = world.hasFigure(login);
         if (!replacing && world.viewerFigureCount() >= cfg.viewerLimit && !"REPLACE_OLDEST".equals(cfg.limitPolicy)) {
-            world.notice("limit_reached", cfg.viewerLimit);
+            if (notify) {
+                world.notice("limit_reached", cfg.viewerLimit);
+            }
             return Outcome.IGNORED_LIMIT;
+        }
+        return null;
+    }
+
+    private Outcome handleSpawn(ChatEvent.Message m, String mcName, long now) {
+        String login = m.login();
+        Outcome blocked = spawnBlocked(m, mcName, true);
+        if (blocked != null) {
+            return blocked;
         }
         if (!commandCooldown.tryAcquire(login, now, cfg.cooldownSeconds * 1000L)) {
             return Outcome.IGNORED_COOLDOWN;
@@ -208,11 +249,12 @@ public final class StreamerPipeline {
         messages.clear();
     }
 
-    /** Zuschauer entfernen (Kick). */
+    /** Zuschauer entfernen (Kick). Seine Figur kommt erst mit einem neuen !skin-Befehl zurück. */
     public void kick(String login) {
         queue.removeViewer(login);
         world.remove(login);
         messages.forget(login);
+        known.forget(login);
     }
 
     /** Zuschauer entfernen und sperren (Ban). */
@@ -224,6 +266,7 @@ public final class StreamerPipeline {
     public void banSkin(String mcName) {
         mod.banSkin(mcName);
         world.removeBySkin(mcName);
+        known.forgetSkin(mcName);
     }
 
     /** Beim Ausschalten des Streamer-Modus. */

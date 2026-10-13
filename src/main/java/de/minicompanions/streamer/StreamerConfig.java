@@ -56,6 +56,8 @@ public final class StreamerConfig {
     public boolean unknownNameDefaultSkin = false;
     public boolean spawnGreeting = true;
     public boolean newViewerBubble = true;
+    /** Zuschauer merken: schreibt jemand ohne Figur (z. B. nach einem Neustart), kommt seine Figur zurück. */
+    public boolean rememberViewers = true;
 
     // --- Zuschauer-Nachrichten über den Figuren ---
     public boolean showMessages = true;

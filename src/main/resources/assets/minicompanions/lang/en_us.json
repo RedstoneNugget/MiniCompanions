@@ -377,6 +377,8 @@
   "minicompanions.streamer.name_colors.multi": "with multiple platforms",
   "minicompanions.streamer.name_colors.off": "off",
   "minicompanions.streamer.new_bubble": "\"New: name\" bubble",
+  "minicompanions.streamer.remember": "Remember viewers (figure comes back)",
+  "minicompanions.streamer.forget": "Forget remembered viewers (%s)",
   "minicompanions.streamer.no_active": "No viewer figures active.",
   "minicompanions.streamer.notice.limit": "Limit reached (%s) - new commands are ignored.",
   "minicompanions.streamer.notice.unknown": "Unknown Minecraft name: %s",

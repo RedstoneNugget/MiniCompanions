@@ -41,7 +41,7 @@ Oder selbst bauen (siehe [Entwicklung](#entwicklung)).
 
 1. [Fabric Loader](https://fabricmc.net/use/) (≥ 0.19) für Minecraft 1.21.11 installieren.
 2. [Fabric API](https://modrinth.com/mod/fabric-api) in den `mods`-Ordner legen.
-3. `minicompanions-1.0.0.jar` (aus den Releases) in den `mods`-Ordner legen.
+3. `minicompanions-1.0.1.jar` (aus den Releases) in den `mods`-Ordner legen.
 4. Optional: [Mod Menu](https://modrinth.com/mod/modmenu) (Einstellungen über das Mod-Menü).
 
 Alle Daten liegen in `config/minicompanions/`:
@@ -52,6 +52,7 @@ Alle Daten liegen in `config/minicompanions/`:
 | `figures.json` | deine Figuren |
 | `streamer.json` | Streamer-Einstellungen |
 | `moderation.json` | Sperrlisten (gesperrte Zuschauer, Skins, Wörter, Whitelist) |
+| `viewers.json` | gemerkte Zuschauer: wer welchen Minecraft-Namen gewählt hat |
 | `skins/` | eigene Skin-PNGs |
 | `accessories/` | eigene Accessoire-PNGs |
 | `lines/` | eigene Sprüche-Dateien |
@@ -191,6 +192,9 @@ Alles, was mit dem Stream-Chat zu tun hat, passiert **nur bei eingeschaltetem St
    Präfix lassen sich im Streamer-Menü unter „Befehl & Limits“ ändern.
 4. Weitere Nachrichten dieser Zuschauer erscheinen als Sprechblase über ihrer Figur. Schreibt jemand
    eine neue Nachricht, ersetzt sie sofort die alte Blase (umstellbar unter „Blasen-Warteschlange“).
+5. Ist die Figur nicht mehr da – z. B. nach einem Neustart des Spiels oder nachdem der Streamer-Modus
+   aus war –, kommt sie mit demselben Skin zurück, sobald der Zuschauer wieder schreibt, und sagt seine
+   Nachricht. Abschaltbar unter „Befehl & Limits“ → „Zuschauer merken“.
 
 - **Verbindung**: anonym und rein lesend (es wird nie in den Chat geschrieben), pro Plattform ein eigener
   Hintergrund-Thread,
@@ -205,7 +209,7 @@ Alles, was mit dem Stream-Chat zu tun hat, passiert **nur bei eingeschaltetem St
   Nachrichten.
 - **Nachrichten**: nur reiner Text. Entfernt bzw. ersetzt werden §-Formatcodes, Steuer- und unsichtbare
   Zeichen, Links und E-Mail-Adressen („[Link]“), lange Zeichenketten, Zeichen-Wiederholungen,
-  Großbuchstaben-Flut und doppelte Nachrichten. Dazu kommen ein Wortfilter (zensieren oder verwerfen),
+  Großbuchstaben-Flut und doppelte Nachrichten (dieselbe Nachricht innerhalb von 30 Sekunden). Dazu kommen ein Wortfilter (zensieren oder verwerfen),
   Rate-Limits sowie einstellbare Anzeigedauer, Länge, Abstand, Deckkraft, Größe, Farbe und
   Rollen-Farben. Nachrichten mit `/` oder `!` am Anfang werden nie gezeigt. Nichts davon wird gespeichert.
 - **Moderation**: Panik-Taste, `/mini panic` und roter Knopf im Streamer-Fenster. Rechtsklick auf eine
@@ -213,7 +217,8 @@ Alles, was mit dem Stream-Chat zu tun hat, passiert **nur bei eingeschaltetem St
   Stummschalten. Außerdem `/mini kick` und `/mini ban`, eine Liste aktiver Zuschauer-Figuren mit
   Sofort-Buttons, „Chat-Spawns pausieren“ und „Nachrichten aus“. Bans und Timeouts der Kanal-Moderation
   (Twitch, Kick und YouTube) entfernen Figur und Blasen automatisch. Gesperrte Zuschauer, Skins und
-  Wörter bleiben nach einem Neustart gespeichert.
+  Wörter bleiben nach einem Neustart gespeichert. Wer gekickt oder gesperrt wird, wird auch nicht mehr
+  gemerkt und bekommt erst mit einem neuen `!skin` wieder eine Figur.
 - Zuschauer-Figuren können nichts auslösen außer ihrem eigenen Spawn und ihren Blasen. Inventar-Aktionen
   sind für sie grundsätzlich gesperrt.
 
@@ -222,7 +227,9 @@ Alles, was mit dem Stream-Chat zu tun hat, passiert **nur bei eingeschaltetem St
 - Beachte die Nutzungsbedingungen deiner Streaming-Plattform. Du bist selbst für die Moderation deines
   Streams verantwortlich. Skins und Nachrichten können anstößig sein, deshalb gibt es Blacklist,
   Wortfilter, Freigabe-Warteschlange und Panik-Taste.
-- Verarbeitet werden nur öffentliche Chat-Nachrichten. Dauerhaft gespeichert wird nur die Sperrliste.
+- Verarbeitet werden nur öffentliche Chat-Nachrichten, gespeichert werden sie nie. Dauerhaft gespeichert
+  werden nur die Sperrlisten und welcher Zuschauer welchen Minecraft-Namen gewählt hat (`viewers.json`;
+  Einträge verfallen nach 60 Tagen ohne Chat-Aktivität, „Gemerkte Zuschauer vergessen“ löscht alle).
 - **Wie die Plattformen gelesen werden** (alle ohne Login, nur öffentliche Chat-Nachrichten):
   - Twitch: anonymer IRC-Zugang.
   - Kick: öffentliche Kanal-Abfrage und der öffentliche Chat-WebSocket der Kick-Webseite.
@@ -257,7 +264,7 @@ Voraussetzung: **JDK 21** (z. B. [Eclipse Temurin 21](https://adoptium.net/)).
 ```
 git clone https://github.com/RedstoneNugget/MiniCompanions.git
 cd MiniCompanions
-gradlew build              # baut build/libs/minicompanions-1.0.0.jar und führt die Unit-Tests aus
+gradlew build              # baut build/libs/minicompanions-1.0.1.jar und führt die Unit-Tests aus
 gradlew test               # Tests: Streamer-Pipeline, Chat-Formate aller Plattformen, Filter, Physik, Wegsuche
 gradlew runClientGameTest  # startet den echten Client und prüft alles automatisch (Screenshots in build/run/clientGameTest/screenshots)
 gradlew runClient -PwithModMenu=true

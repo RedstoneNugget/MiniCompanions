@@ -10,6 +10,9 @@ final class FakeWorld implements ViewerWorld {
     final Map<String, String> figures = new LinkedHashMap<>();
     final Map<String, String> bubbles = new LinkedHashMap<>();
     final List<String> notices = new ArrayList<>();
+    /** Wie die echte Welt: erzeugte Figuren werden gemerkt (falls gesetzt). */
+    KnownViewers known;
+    long now;
     int spawnCalls;
 
     @Override
@@ -26,6 +29,9 @@ final class FakeWorld implements ViewerWorld {
     public void spawn(SpawnQueue.Request r) {
         spawnCalls++;
         figures.put(r.login(), r.mcName());
+        if (known != null) {
+            known.remember(r.login(), r.mcName(), now);
+        }
     }
 
     @Override

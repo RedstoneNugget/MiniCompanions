@@ -67,7 +67,7 @@ public final class StreamerModeManager {
     /** streamer.json wurde extern geändert: Pipeline mit den neuen Einstellungen neu aufbauen. */
     public void configReloaded() {
         if (enabled) {
-            pipeline = new StreamerPipeline(cfg(), moderation, viewers, System::currentTimeMillis, () -> enabled);
+            pipeline = new StreamerPipeline(cfg(), moderation, viewers, Mini.configs.viewers, System::currentTimeMillis, () -> enabled);
         }
     }
 
@@ -84,7 +84,7 @@ public final class StreamerModeManager {
             enabled = true;
             cfg().streamerMode = true;
             Mini.configs.markDirty(ConfigManager.Part.STREAMER);
-            pipeline = new StreamerPipeline(cfg(), moderation, viewers, System::currentTimeMillis, () -> enabled);
+            pipeline = new StreamerPipeline(cfg(), moderation, viewers, Mini.configs.viewers, System::currentTimeMillis, () -> enabled);
             Mini.chat(Mini.t("msg.streamer_on", "Streamer-Modus AN."));
         }
         manualOff = false;
@@ -274,6 +274,9 @@ public final class StreamerModeManager {
 
     /** Pro Client-Tick: Ereignisse (max. 50) auf dem Client-Thread verarbeiten. */
     public void tick() {
+        if (Mini.configs.viewers.takeDirty()) {
+            Mini.configs.markDirty(ConfigManager.Part.VIEWERS);
+        }
         if (!enabled || pipeline == null) {
             if (!inbound.isEmpty()) {
                 inbound.clear();
@@ -292,6 +295,18 @@ public final class StreamerModeManager {
         }
         pipeline.tick();
         viewers.tick();
+    }
+
+    /** Anzahl gemerkter Zuschauer (deren Figur beim nächsten Schreiben zurückkommt). */
+    public int rememberedViewers() {
+        return Mini.configs.viewers.size();
+    }
+
+    /** Alle gemerkten Zuschauer vergessen (aktive Figuren bleiben). */
+    public void forgetViewers() {
+        Mini.configs.viewers.clear();
+        Mini.configs.viewers.takeDirty();
+        Mini.configs.markDirty(ConfigManager.Part.VIEWERS);
     }
 
     /** Nachricht simulieren (Test-Befehl /mini streamtest) - nur im Streamer-Modus. */
@@ -329,6 +344,7 @@ public final class StreamerModeManager {
             pipeline.kick(l);
         } else {
             viewers.remove(l);
+            Mini.configs.viewers.forget(l);
         }
     }
 
@@ -339,6 +355,7 @@ public final class StreamerModeManager {
         } else {
             moderation.banViewer(l);
             viewers.remove(l);
+            Mini.configs.viewers.forget(l);
         }
     }
 
@@ -348,6 +365,7 @@ public final class StreamerModeManager {
         } else {
             moderation.banSkin(mcName);
             viewers.removeBySkin(mcName);
+            Mini.configs.viewers.forgetSkin(mcName);
         }
     }
 

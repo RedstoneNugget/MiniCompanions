@@ -63,7 +63,7 @@ jar {
 test {
     useJUnitPlatform()
     // Live-Test gegen echte Streams nur auf Wunsch: gradlew test --tests '*LiveChatProbe*' -Dlive=true -Dkick=NAME -Dyoutube=@NAME -Dtiktok=NAME
-    ['live', 'kick', 'youtube', 'tiktok', 'twitch', 'seconds'].each { p -> if (System.getProperty(p) != null) systemProperty p, System.getProperty(p) }
+    ['live', 'kick', 'youtube', 'tiktok', 'twitch', 'twitchquiet', 'seconds'].each { p -> if (System.getProperty(p) != null) systemProperty p, System.getProperty(p) }
     outputs.upToDateWhen { System.getProperty('live') == null }
     testLogging {
         events 'passed', 'skipped', 'failed'

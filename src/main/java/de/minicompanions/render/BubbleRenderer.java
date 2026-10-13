@@ -44,7 +44,8 @@ public final class BubbleRenderer {
         float boxW = w * s;
         float left = anchorX - boxW / 2f;
         left = Math.max(2, Math.min(screenW - boxW - 2, left));
-        float top = anchorY - (h + 4) * s;
+        // nie über den oberen Bildschirmrand hinaus (sonst ist die Nachricht unsichtbar)
+        float top = Math.max(2, anchorY - (h + 4) * s);
         float pointerX = (anchorX - left) / s;
 
         int a = Math.round(alpha * opacity * 255);

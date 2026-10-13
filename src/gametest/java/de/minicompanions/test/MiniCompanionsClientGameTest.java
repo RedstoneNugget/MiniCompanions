@@ -361,7 +361,13 @@ public class MiniCompanionsClientGameTest implements FabricClientGameTest {
             check(context.computeOnClient(c -> !Mini.room.isOpen() && c.currentScreen == null), "nochmal J: Zimmer zu, zurück im Spiel");
 
             // Figur halten, währenddessen schließt sich das Fenster (ESC/J/K), dann loslassen: darf nicht in der Luft hängen bleiben
-            context.runOnClient(c -> c.setScreen(new de.minicompanions.input.OverlayInteractScreen()));
+            context.runOnClient(c -> {
+                byName("Test3").data.behavior = false;
+                byName("Test3").brain.stopNavigation();
+                c.setScreen(new de.minicompanions.input.OverlayInteractScreen());
+            });
+            // erst greifen, wenn die Figur ruhig auf dem Boden steht
+            waitFor(context, 200, () -> context.computeOnClient(c -> byName("Test3").body.onGround && Math.abs(byName("Test3").body.vx) < 0.01f));
             context.waitTicks(3);
             float[] grabAt = context.computeOnClient(c -> {
                 Figure f = byName("Test3");
@@ -544,6 +550,19 @@ public class MiniCompanionsClientGameTest implements FabricClientGameTest {
                     "Streamer-Modus aus entfernt alles sofort");
             check(context.computeOnClient(c -> Mini.streamer.simulate("eve", "!skin Notch")) == StreamerPipeline.Outcome.IGNORED_DISABLED,
                     "Streamer-Modus aus: nichts passiert");
+            // Zuschauer werden gemerkt: nach Aus/An (wie nach einem Neustart) holt eine normale Nachricht die Figur zurück
+            context.runOnClient(c -> Mini.streamer.setEnabled(true));
+            check(context.computeOnClient(c -> Mini.configs.viewers.skinOf("dora")) != null, "Zuschauer mit Skin gemerkt");
+            check(context.computeOnClient(c -> Mini.streamer.simulate("dora", "bin wieder da")) == StreamerPipeline.Outcome.BUBBLE_SHOWN,
+                    "gemerkter Zuschauer: Nachricht ohne Figur wird angenommen");
+            waitFor(context, 300, () -> context.computeOnClient(c -> Mini.streamer.viewers().list().stream().anyMatch(f -> "dora".equals(f.viewerLogin))));
+            String back = context.computeOnClient(c -> Mini.streamer.viewers().list().stream().filter(f -> "dora".equals(f.viewerLogin)).findFirst()
+                    .map(f -> f.viewerMcName + " / " + (f.bubbles.current() == null ? "-" : f.bubbles.current().text())).orElse("keine Figur"));
+            check("Notch / bin wieder da".equals(back), "Figur kommt beim Schreiben zurück und sagt die Nachricht (" + back + ")");
+            context.waitTicks(10);
+            context.takeScreenshot("10d_viewer_back");
+            context.runOnClient(c -> Mini.streamer.setEnabled(false));
+            context.waitTicks(2);
             check(context.computeOnClient(c -> Mini.figures.all().stream().noneMatch(f -> f.activity == de.minicompanions.ai.Activity.SLEEP)),
                     "keine Figur schläft");
 
@@ -559,7 +578,88 @@ public class MiniCompanionsClientGameTest implements FabricClientGameTest {
             context.takeScreenshot("13_manage");
             context.setScreen(() -> null);
             context.waitTicks(5);
+
+            bannerScene(context, sp);
         }
+    }
+
+    /**
+     * Szene für Banner und Screenshots in 1920x1080: große Figuren mit echten Skins, Namen in Plattform-Farben
+     * und Sprechblasen. Zuschauer-Modus, damit weder Hand noch Hotbar im Bild sind.
+     */
+    private static void bannerScene(ClientGameTestContext context, TestSingleplayerContext sp) {
+        context.getInput().resizeWindow(1920, 1080);
+        sp.getServer().runCommand("gamemode spectator @a");
+        sp.getServer().runCommand("time set 6000");
+        context.runOnClient(c -> {
+            c.player.setPitch(-6f);
+            Mini.figures.clearOwn();
+            Mini.room.setOpen(false);
+            Mini.cfg().globalSize = 100;
+            Mini.cfg().armorMode = "NONE";
+            Mini.cfg().equipmentMirror = false;
+            Mini.cfg().talkFrequency = 0;
+            Mini.cfg().maxSize = 1000;
+            var sc = Mini.configs.streamer;
+            sc.viewerLimit = 10;
+            sc.cooldownSeconds = 0;
+            sc.showHudIcon = false;
+            sc.newViewerBubble = false;
+            sc.spawnGreeting = false;
+            sc.platformNameColors = "ALWAYS";
+            Mini.streamer.setEnabled(true);
+            Mini.streamer.moderation().setSpawnsPaused(false);
+            FigureData me = new FigureData();
+            me.name = "Redstone_Nugget";
+            me.skinType = "PLAYER";
+            me.skinValue = "Redstone_Nugget";
+            me.accessories.add("TOP_HAT");
+            me.pet = "CAT";
+            Mini.figures.add(me);
+            Mini.streamer.simulate(de.minicompanions.streamer.ChatPlatform.TWITCH, "anna", "!skin Notch");
+            Mini.streamer.simulate(de.minicompanions.streamer.ChatPlatform.KICK, "kickfan", "!skin jeb_");
+            Mini.streamer.simulate(de.minicompanions.streamer.ChatPlatform.YOUTUBE, "maxplays", "!skin Dinnerbone");
+            Mini.streamer.simulate(de.minicompanions.streamer.ChatPlatform.TIKTOK, "lina.tt", "!skin Grumm");
+        });
+        waitFor(context, 600, () -> context.computeOnClient(c -> Mini.figures.all().size() >= 5
+                && Mini.figures.all().stream().allMatch(f -> f.skin != null && f.skin.state != de.minicompanions.skin.SkinManager.State.LOADING)));
+        context.runOnClient(c -> {
+            float sw = c.getWindow().getScaledWidth();
+            float sh = c.getWindow().getScaledHeight();
+            // Figuren in der rechten Bildhälfte aufstellen (links kommt der Text hin)
+            Object[][] layout = {
+                    {"Redstone_Nugget", 0.765f, 640}, {"anna", 0.565f, 380}, {"kickfan", 0.895f, 440},
+                    {"maxplays", 0.475f, 300}, {"lina.tt", 0.645f, 300}};
+            for (Object[] l : layout) {
+                Figure f = byName((String) l[0]);
+                f.data.sizePercent = (Integer) l[2];
+                Mini.figures.moveToScreen(f, sw * (Float) l[1], sh - 1);
+                f.brain.stopNavigation();
+            }
+        });
+        context.waitTicks(30);
+        context.runOnClient(c -> {
+            // Posen erst nach der Landung setzen (beim Landen wird die Tätigkeit sonst überschrieben)
+            Object[][] poses = {{"Redstone_Nugget", de.minicompanions.ai.Activity.WAVE}, {"anna", de.minicompanions.ai.Activity.CHEER},
+                    {"kickfan", de.minicompanions.ai.Activity.CHEER}, {"maxplays", de.minicompanions.ai.Activity.IDLE},
+                    {"lina.tt", de.minicompanions.ai.Activity.WAVE}};
+            float sw2 = c.getWindow().getScaledWidth();
+            float[] xs = {0.765f, 0.565f, 0.895f, 0.475f, 0.645f};
+            for (int i = 0; i < poses.length; i++) {
+                Figure f = byName((String) poses[i][0]);
+                f.brain.stopNavigation();
+                // Position nach der Landung erneut festlegen, die lange Pose verhindert neues Loslaufen
+                f.body.x = sw2 * xs[i];
+                f.body.vx = 0;
+                f.setActivity((de.minicompanions.ai.Activity) poses[i][1], 60);
+                f.facing = 0;
+            }
+            Mini.streamer.simulate(de.minicompanions.streamer.ChatPlatform.TWITCH, "anna", "hi chat!");
+            Mini.streamer.simulate(de.minicompanions.streamer.ChatPlatform.KICK, "kickfan", "GG");
+            c.inGameHud.getChatHud().clear(false);
+        });
+        context.waitTicks(40);
+        context.takeScreenshot("99_banner_scene");
     }
 
     private static Map<String, Integer> countItems(net.minecraft.client.MinecraftClient c) {

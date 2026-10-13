@@ -233,6 +233,101 @@ class StreamerPipelineTest {
     }
 
     @Test
+    void sameMessageLaterIsShownAgain() {
+        p.onEvent(msg("anna", "!skin Notch"));
+        tickAll();
+        assertEquals(BUBBLE_SHOWN, p.onEvent(msg("anna", "hi")));
+        clock.addAndGet(5_000);
+        assertEquals(IGNORED_DUPLICATE, p.onEvent(msg("anna", "hi")), "direkt wiederholt = Spam");
+        // nach einer Weile darf dieselbe Nachricht wieder erscheinen
+        clock.addAndGet(ViewerMessageService.DUPLICATE_WINDOW_MS);
+        world.bubbles.clear();
+        assertEquals(BUBBLE_SHOWN, p.onEvent(msg("anna", "hi")));
+        assertEquals("hi", world.bubbles.get("anna"));
+    }
+
+    /** Pipeline wie nach einem Neustart des Spiels: Figuren weg, gemerkte Zuschauer noch da. */
+    private StreamerPipeline restart(KnownViewers known) {
+        world.removeAll();
+        return new StreamerPipeline(cfg, mod, world, known, clock::get, enabled::get);
+    }
+
+    @Test
+    void rememberedViewerComesBackWhenWriting() {
+        KnownViewers known = new KnownViewers();
+        world.known = known;
+        p = new StreamerPipeline(cfg, mod, world, known, clock::get, enabled::get);
+        p.onEvent(msg("anna", "!skin Notch"));
+        tickAll();
+        assertEquals("Notch", known.skinOf("anna"));
+        StreamerPipeline after = restart(known);
+        assertFalse(world.hasFigure("anna"));
+        // Anna schreibt nach dem Neustart: Figur kommt mit ihrem Skin zurück und sagt die Nachricht
+        assertEquals(BUBBLE_SHOWN, after.onEvent(msg("anna", "bin wieder da")));
+        assertEquals("Notch", world.figures.get("anna"));
+        assertEquals("bin wieder da", world.bubbles.get("anna"));
+        // wer nie !skin geschrieben hat, bekommt keine Figur
+        assertEquals(IGNORED_NO_FIGURE, after.onEvent(msg("bob", "hallo")));
+        assertFalse(world.hasFigure("bob"));
+        // Befehle wie !discord holen keine Figur zurück
+        world.removeAll();
+        assertEquals(IGNORED_COMMAND, after.onEvent(msg("anna", "!discord")));
+        assertFalse(world.hasFigure("anna"));
+    }
+
+    @Test
+    void rememberedViewerRespectsModerationAndSettings() {
+        KnownViewers known = new KnownViewers();
+        world.known = known;
+        p = new StreamerPipeline(cfg, mod, world, known, clock::get, enabled::get);
+        p.onEvent(msg("anna", "!skin Notch"));
+        p.onEvent(msg("bob", "!skin jeb_"));
+        p.onEvent(msg("cara", "!skin Dinnerbone"));
+        tickAll();
+        // gekickt: kommt erst mit neuem !skin zurück
+        p.kick("anna");
+        assertNull(known.skinOf("anna"));
+        StreamerPipeline after = restart(known);
+        assertEquals(IGNORED_NO_FIGURE, after.onEvent(msg("anna", "hallo?")));
+        // Spawns pausiert: keine Rückkehr
+        mod.setSpawnsPaused(true);
+        assertEquals(IGNORED_NO_FIGURE, after.onEvent(msg("bob", "hallo")));
+        mod.setSpawnsPaused(false);
+        // Einstellung aus: keine Rückkehr
+        cfg.rememberViewers = false;
+        assertEquals(IGNORED_NO_FIGURE, after.onEvent(msg("bob", "hallo")));
+        cfg.rememberViewers = true;
+        assertEquals(BUBBLE_SHOWN, after.onEvent(msg("bob", "hallo")));
+        // Skin gesperrt: vergessen
+        after.banSkin("Dinnerbone");
+        assertNull(known.skinOf("cara"));
+        assertEquals(IGNORED_NO_FIGURE, after.onEvent(msg("cara", "hi")));
+        // vom Kanal gebannt/getimeoutet: vergessen
+        after.onEvent(new ChatEvent.UserCleared("bob"));
+        assertNull(known.skinOf("bob"));
+    }
+
+    @Test
+    void rememberedViewersRespectTheLimit() {
+        KnownViewers known = new KnownViewers();
+        world.known = known;
+        cfg.viewerLimit = 1;
+        cfg.limitPolicy = "IGNORE";
+        p = new StreamerPipeline(cfg, mod, world, known, clock::get, enabled::get);
+        p.onEvent(msg("anna", "!skin Notch"));
+        tickAll();
+        known.remember("bob", "jeb_", clock.get());
+        // Limit voll: Bob kommt nicht zurück, Annas Figur bleibt
+        assertEquals(IGNORED_NO_FIGURE, p.onEvent(msg("bob", "hallo")));
+        assertEquals(1, world.figures.size());
+        assertTrue(world.notices.isEmpty(), "keine Limit-Meldung für normale Nachrichten");
+        // "älteste ersetzen": Bob verdrängt Anna
+        cfg.limitPolicy = "REPLACE_OLDEST";
+        assertEquals(BUBBLE_SHOWN, p.onEvent(msg("bob", "hallo")));
+        assertTrue(world.hasFigure("bob") && !world.hasFigure("anna"));
+    }
+
+    @Test
     void sameNameOnDifferentPlatformsAreDifferentViewers() {
         assertEquals(SPAWN_QUEUED, p.onEvent(new ChatEvent.Message(ChatPlatform.TWITCH, "anna", "anna", "!skin Notch", ChatRoles.NONE, null, null)));
         assertEquals(SPAWN_QUEUED, p.onEvent(new ChatEvent.Message(ChatPlatform.KICK, "kick:anna", "anna", "!skin jeb_", ChatRoles.NONE, null, null)));
