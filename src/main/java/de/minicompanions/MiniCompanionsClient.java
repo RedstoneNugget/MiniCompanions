@@ -54,6 +54,11 @@ public final class MiniCompanionsClient implements ClientModInitializer {
         } catch (IOException e) {
             LOG.warn("[MiniCompanions] Cache-Ordner nicht anlegbar: {}", e.toString());
         }
+        // heruntergeladene Skins nicht ansammeln: bei jedem Start frisch laden
+        int cleared = SkinManager.clearDiskCache(skinCache);
+        if (cleared > 0) {
+            LOG.info("[MiniCompanions] {} Skins aus dem Cache gelöscht", cleared);
+        }
         Mini.skins = new SkinManager(Mini.configs.sub("skins"), skinCache);
         Mini.skins.setErrorReporter(MiniCompanionsClient::reportSkinError);
         Mini.lines = new Lines();

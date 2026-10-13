@@ -230,6 +230,8 @@ Alles, was mit dem Stream-Chat zu tun hat, passiert **nur bei eingeschaltetem St
 - Verarbeitet werden nur öffentliche Chat-Nachrichten, gespeichert werden sie nie. Dauerhaft gespeichert
   werden nur die Sperrlisten und welcher Zuschauer welchen Minecraft-Namen gewählt hat (`viewers.json`;
   Einträge verfallen nach 60 Tagen ohne Chat-Aktivität, „Gemerkte Zuschauer vergessen“ löscht alle).
+  Heruntergeladene Skins liegen nur zwischengespeichert in `cache/skins/` und werden bei jedem Spielstart
+  gelöscht.
 - **Wie die Plattformen gelesen werden** (alle ohne Login, nur öffentliche Chat-Nachrichten):
   - Twitch: anonymer IRC-Zugang.
   - Kick: öffentliche Kanal-Abfrage und der öffentliche Chat-WebSocket der Kick-Webseite.

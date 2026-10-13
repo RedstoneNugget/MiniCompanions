@@ -19,7 +19,9 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.time.Duration;
@@ -92,6 +94,25 @@ public final class SkinManager {
     private final HttpClient http;
     private final AtomicInteger counter = new AtomicInteger();
     private Consumer<String> errorReporter = s -> { };
+
+    /**
+     * Beim Spielstart: alle heruntergeladenen Spieler-Skins im Cache löschen. Sie werden bei Bedarf neu von
+     * Mojang geladen. Eigene Skin-Dateien (Ordner skins/) sind davon nicht betroffen.
+     * @return Anzahl gelöschter Skins
+     */
+    public static int clearDiskCache(Path cacheDir) {
+        int n = 0;
+        try (DirectoryStream<Path> files = Files.newDirectoryStream(cacheDir, "*.{png,slim,wide}")) {
+            for (Path p : files) {
+                if (Files.isRegularFile(p, LinkOption.NOFOLLOW_LINKS) && Files.deleteIfExists(p) && p.toString().endsWith(".png")) {
+                    n++;
+                }
+            }
+        } catch (IOException e) {
+            LOG.warn("[MiniCompanions] Skin-Cache nicht vollständig gelöscht: {}", e.toString());
+        }
+        return n;
+    }
 
     public SkinManager(Path skinsDir, Path cacheDir) {
         this.skinsDir = skinsDir;

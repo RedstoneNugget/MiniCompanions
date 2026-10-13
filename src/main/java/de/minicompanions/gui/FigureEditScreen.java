@@ -32,6 +32,9 @@ public final class FigureEditScreen extends OptionsScreen {
     private float rotation;
     private boolean dragRotate;
     private double lastMx;
+    /** Skin-Eingabe beim letzten Bild und seit wann sie unverändert ist (Skin erst nach dem Tippen laden). */
+    private String skinInput;
+    private long skinInputSince;
 
     public FigureEditScreen(Screen parent, FigureData data) {
         this(parent, data, false);
@@ -45,6 +48,7 @@ public final class FigureEditScreen extends OptionsScreen {
         this.work.id = data.id;
         this.preview = new Figure(work, false);
         this.preview.setActivity(Activity.IDLE, 1e9f);
+        this.skinInput = work.skinType + "|" + work.skinValue;
         this.leftInset = 120;
         var cfg = Mini.cfg();
 
@@ -217,8 +221,18 @@ public final class FigureEditScreen extends OptionsScreen {
         int pw = leftInset - 20;
         int ph = height - 80;
         Ui.panel(ctx, px, py, pw, ph, 0xC0181C26);
-        preview.animTime = (System.currentTimeMillis() % 1_000_000L) / 1000f;
-        preview.refreshSkin(Mini.skins);
+        long now = System.currentTimeMillis();
+        preview.animTime = (now % 1_000_000L) / 1000f;
+        // Skin erst laden, wenn kurz nicht mehr getippt wurde - sonst wird jeder halbe Name
+        // ("dia", "diam", ...) bei Mojang abgefragt
+        String input = work.skinType + "|" + work.skinValue;
+        if (!input.equals(skinInput)) {
+            skinInput = input;
+            skinInputSince = now;
+        }
+        if (now - skinInputSince >= 700) {
+            preview.refreshSkin(Mini.skins);
+        }
         var cfg = Mini.cfg();
         float size = work.sizePercent != null ? work.sizePercent : cfg.globalSize;
         // Vorschau-Einheit: passt immer in das Feld, wächst aber sichtbar mit der Größe

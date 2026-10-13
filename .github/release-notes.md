@@ -5,10 +5,12 @@
 - **Gleiche Nachricht später wieder erlaubt:** Der Spam-Schutz blockiert dieselbe Nachricht nur noch innerhalb von 30 Sekunden (vorher für immer).
 - **Twitch:** Eine still abgerissene Verbindung wird nach ca. 90 Sekunden erkannt und neu aufgebaut (vorher erst nach 6 Minuten).
 - Sprechblasen bleiben sichtbar, wenn eine Figur ganz oben am Bildschirmrand ist.
+- **Skin-Cache:** Heruntergeladene Skins werden bei jedem Spielstart gelöscht und sammeln sich nicht mehr an.
+- **Figuren-Editor:** Beim Eintippen eines Minecraft-Namens wird der Skin erst geladen, wenn du fertig getippt hast (vorher wurde jeder halbe Name bei Mojang abgefragt).
 
 ### Installation
 1. [Fabric Loader](https://fabricmc.net/use/) für 1.21.11 und die [Fabric API](https://modrinth.com/mod/fabric-api) installieren
 2. `minicompanions-1.0.1.jar` (unten bei „Assets“) in den `mods`-Ordner legen (alte Version löschen)
 3. Im Spiel **K** drücken
 
-**English:** Viewers are now remembered: when a viewer whose figure is gone (e.g. after a game restart) writes again, their figure comes back with the same skin and says the message. The same message is only treated as spam within 30 seconds, and dropped Twitch connections are detected after about 90 seconds instead of 6 minutes.
+**English:** Viewers are now remembered: when a viewer whose figure is gone (e.g. after a game restart) writes again, their figure comes back with the same skin and says the message. The same message is only treated as spam within 30 seconds, and dropped Twitch connections are detected after about 90 seconds instead of 6 minutes. Downloaded skins are cleared on every game start, and the figure editor only loads a skin once you stop typing.
