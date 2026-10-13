@@ -1,0 +1,94 @@
+{
+  "default": {
+    "idle": ["Nice weather up here!", "What are we doing today?", "I'm {name}!", "Hmm…", "I like it here.", "*hums*"],
+    "happy": ["Yay!", "Today is a good day!", "I like you!", "Hehe!"],
+    "bored": ["I'm bored…", "Will anyone play with me?", "Yawn."],
+    "tired": ["I'm so tired…", "Quick nap?", "Zzz… oh!"],
+    "hungry": ["I'm hungry!", "Is there anything to eat?", "My tummy is rumbling."],
+    "eat": ["Munch!", "Yummy!", "Nom nom nom.", "Thanks for the food!"],
+    "greet": ["Hello!", "Hi!", "Hey there!", "Nice to see you!"],
+    "chat": ["Guess what?", "I heard something…", "Really?", "Haha, exactly!"],
+    "friend": ["You're my best friend!", "Friends forever!", "Glad you're here."],
+    "love": ["I love you!", "My sweetheart!", "<3"],
+    "follow": ["Wait for me!", "I'm coming along!"],
+    "fight": ["Just you wait!", "Come here!", "You'll get it back!"],
+    "win": ["I won!", "Ha! I'm number one!"],
+    "lose": ["Aww…", "Next time!"],
+    "married": ["We got married!", "Together forever!"],
+    "tower": ["Human tower! Everyone up!", "Climb on me!"],
+    "tower_top": ["I'm on top!", "What a view!"],
+    "petted": ["Hehe, that's nice.", "More!", "*purr*"],
+    "tickled": ["Hahaha, stop!", "That tickles!", "Hehehe!"],
+    "picked": ["Whoa!", "Hey, put me down!", "Wheee!"],
+    "thrown": ["Waaah!", "I'm flyiiing!", "Ouch!"],
+    "poke": ["What is it?", "Hey!", "Yes?", "I'm awake!"],
+    "night": ["It's getting dark…", "Whoa, it got really dark!", "I brought a lantern."],
+    "morning": ["Good morning!", "Yay, it is bright again!"],
+    "rain": ["It's raining! Umbrella up!", "Good thing I have an umbrella."],
+    "snow": ["Snow! Snowball fight!", "Brrr, cold!"],
+    "thunder": ["Eek, thunder!", "I'm scared of storms!"],
+    "hurt": ["Watch out!", "Ouch, are you okay?", "Careful!"],
+    "lowhealth": ["You need to heal!", "Eat something, quick!", "I'm worried…"],
+    "death": ["Oh no…", "We'll make it next time.", "*sniff*"],
+    "death_msg": ["Oh no, someone died.", "That was close for them."],
+    "levelup": ["Level up!", "Well done!", "Keep going!"],
+    "level_self": ["I got stronger!", "New level!"],
+    "desert": ["It's so hot here…", "I'm sweating!"],
+    "nether": ["It's creepy here…", "So hot and red!", "I want to go home."],
+    "end": ["Wow, the End!", "So many stars…"],
+    "portal": ["Where are we now?", "That tingled!"],
+    "height": ["So high up…", "Don't look down!"],
+    "underwater": ["Blub!", "Hold your breath!"],
+    "combat": ["Go get them!", "You can do it!", "Strong!"],
+    "killstreak": ["Unstoppable!", "What a streak!", "Amazing!"],
+    "boss": ["A boss! Help!", "This is dangerous!"],
+    "boss_end": ["We won!", "The boss is defeated!"],
+    "creeper": ["Creeper! Run!", "Careful, it's hissing!"],
+    "lava": ["Careful, lava!", "Hot hot hot!"],
+    "spider": ["A spider! Ew!"],
+    "phantom": ["Phantoms! You should sleep!"],
+    "durability": ["Your tool is about to break!", "Better repair that."],
+    "starving": ["You're hungry, eat something!", "Snack time!"],
+    "rare": ["Wow, {item}!", "A {item}! Yay!", "Is that {item}?!"],
+    "gg": ["GG!", "Well played!"],
+    "lol": ["Haha!", "Lol!", "Hehe!"],
+    "ownname": ["Someone is talking about you!", "You were mentioned!"],
+    "keyword": ["I heard that!", "Oh?"],
+    "work": ["Let's get to work!", "I'll help!", "On it!"],
+    "workdone": ["Done!", "All tidy!", "Finished!"],
+    "watch_build": ["Nice build!", "Another block goes there.", "I'm watching you."],
+    "watch_mine": ["Dig, dig, dig!", "Found any diamonds?", "Careful below you!"]
+  },
+  "happy": {
+    "idle": ["La la la!", "Everything is great!", "I'm so happy!"],
+    "greet": ["Hellooo! How lovely!", "Hey hey hey!"]
+  },
+  "lazy": {
+    "idle": ["Resting first…", "Do I have to move?", "*yawn*"],
+    "work": ["Do I have to?", "Fine…"],
+    "tired": ["I'm always tired.", "Five more minutes…"]
+  },
+  "curious": {
+    "idle": ["What's that over there?", "Interesting…", "I want to know everything!"],
+    "watch_build": ["How did you do that?", "What are you building?"]
+  },
+  "shy": {
+    "idle": ["…", "Um…", "Hello…?"],
+    "greet": ["H-hello…", "Oh, hi…"],
+    "picked": ["Eek!", "P-please put me down…"]
+  },
+  "brave": {
+    "idle": ["I'm not afraid of anything!", "Adventure!"],
+    "creeper": ["I'll stop it!", "Don't worry, I'm here!"],
+    "boss": ["We can do this!", "Into battle!"]
+  },
+  "chaotic": {
+    "idle": ["Woohooo!", "Chaos!", "Let's press all the buttons!"],
+    "thrown": ["Again! Again!", "That was great!"]
+  },
+  "diligent": {
+    "idle": ["Anything to do?", "Tidy room, tidy mind."],
+    "work": ["Right away!", "Happy to do it!"],
+    "workdone": ["Perfectly sorted!", "Done thoroughly."]
+  }
+}

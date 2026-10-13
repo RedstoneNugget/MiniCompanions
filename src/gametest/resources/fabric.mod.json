@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "id": "minicompanions-gametest",
+  "version": "1.0.0",
+  "name": "Mini Companions GameTest",
+  "environment": "*",
+  "entrypoints": {
+    "fabric-client-gametest": ["de.minicompanions.test.MiniCompanionsClientGameTest"]
+  },
+  "depends": {
+    "minicompanions": "*"
+  }
+}

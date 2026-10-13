@@ -1,0 +1,83 @@
+plugins {
+    id 'fabric-loom' version '1.17.21'
+}
+
+version = project.mod_version
+group = project.maven_group
+
+base {
+    archivesName = project.archives_base_name
+}
+
+repositories {
+    // Mod Menu (optional, nur compileOnly)
+    maven {
+        name = 'TerraformersMC'
+        url = 'https://maven.terraformersmc.com/releases/'
+        content { includeGroup 'com.terraformersmc' }
+    }
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+    mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
+    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+
+    // Mod Menu ist optional: nur zum Kompilieren.
+    modCompileOnly "com.terraformersmc:modmenu:${project.modmenu_version}"
+    if (project.findProperty('withModMenu') == 'true') {
+        modLocalRuntime "com.terraformersmc:modmenu:${project.modmenu_version}"
+    }
+
+    // Unit-Tests fuer die reine Logik (Filter, Parser, Physik) ohne Minecraft
+    testImplementation platform('org.junit:junit-bom:5.14.2')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+processResources {
+    inputs.property 'version', project.version
+    filesMatching('fabric.mod.json') {
+        expand 'version': project.version
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    it.options.release = 21
+    it.options.encoding = 'UTF-8'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
+jar {
+    from('LICENSE') {
+        rename { "${it}_${project.archives_base_name}" }
+    }
+    from('THIRD_PARTY_NOTICES.md')
+}
+
+test {
+    useJUnitPlatform()
+    // Live-Test gegen echte Streams nur auf Wunsch: gradlew test --tests '*LiveChatProbe*' -Dlive=true -Dkick=NAME -Dyoutube=@NAME -Dtiktok=NAME
+    ['live', 'kick', 'youtube', 'tiktok', 'twitch', 'seconds'].each { p -> if (System.getProperty(p) != null) systemProperty p, System.getProperty(p) }
+    outputs.upToDateWhen { System.getProperty('live') == null }
+    testLogging {
+        events 'passed', 'skipped', 'failed'
+        showStandardStreams = true
+    }
+}
+
+// Automatischer In-Game-Test (startet den echten Client): gradlew runClientGameTest
+fabricApi {
+    configureTests {
+        createSourceSet = true
+        modId = 'minicompanions-gametest'
+        enableGameTests = false
+        enableClientGameTests = true
+        eula = true
+    }
+}

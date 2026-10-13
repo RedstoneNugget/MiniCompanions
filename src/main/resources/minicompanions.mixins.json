@@ -1,0 +1,18 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "de.minicompanions.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "BossBarHudAccessor",
+    "ChatHudAccessor",
+    "GameRendererMixin",
+    "HandledScreenAccessor",
+    "InGameHudMixin",
+    "MouseMixin",
+    "ScreenshotRecorderMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
